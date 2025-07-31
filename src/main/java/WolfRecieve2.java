@@ -89,7 +89,8 @@ public class WolfRecieve2 {
                         e.printStackTrace();
                     }
                 }
-
+                System.out.println("Data Received: "+angles[0] + ", " + angles[1] + ", " + angles[2] + ", " + angles[3]);
+                System.out.println("Velocities: " + vels[0] + ", " + vels[1] + ", " + vels[2] + ", " + vels[3]);
                 Platform.runLater(() -> WolfScene2.update(vels, angles, chassis));
             }, 0, 20, java.util.concurrent.TimeUnit.MILLISECONDS);
         } else if (TYPE == 2) {

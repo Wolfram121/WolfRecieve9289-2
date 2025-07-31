@@ -13,6 +13,7 @@ import javafx.stage.Stage;
 
 public class WolfScene2 extends Application {
     static final java.util.concurrent.CountDownLatch READY = new java.util.concurrent.CountDownLatch(1);
+    private static final Group[] wheelGroups = new Group[4];
     private static final Cylinder[] wheels = new Cylinder[4];
     private static final double SPACING = 100;
 
@@ -21,36 +22,45 @@ public class WolfScene2 extends Application {
     private static double dY = 0;
     private final Rotate rotateX = new Rotate(180, Rotate.X_AXIS);
     private final Rotate rotateY = new Rotate(0, Rotate.Y_AXIS);
-    private final Rotate rotateZ = new Rotate(0, Rotate.Z_AXIS);
+    private final Rotate rotateZ = new Rotate(0, Rotate.X_AXIS);
 
     private static final double[] chassisPose = new double[3];
     private final Group chassisGroup = new Group();
     private final Translate chassisTranslate = new Translate(0, 0, 0);
-    private final Rotate chassisRotate = new Rotate(0, Rotate.Z_AXIS);
+    private final Rotate chassisRotate = new Rotate(0, Rotate.X_AXIS);
     private Box chassis;
 
     @Override
     public void start(Stage stage) {
         Group root = new Group();
 
+        // Create chassis box
         chassis = new Box(SPACING * 2, SPACING * 2, 10);
         chassis.setMaterial(new PhongMaterial(Color.SLATEGRAY));
 
+        // Wheel material
         PhongMaterial wheelMaterial = new PhongMaterial(Color.DARKGRAY);
-        wheels[0] = createWheel(-SPACING, SPACING, wheelMaterial);
-        wheels[1] = createWheel(-SPACING, -SPACING, wheelMaterial);
-        wheels[2] = createWheel(SPACING, -SPACING, wheelMaterial);
-        wheels[3] = createWheel(SPACING, SPACING, wheelMaterial);
 
-        chassisGroup.getChildren().addAll(chassis, wheels[0], wheels[1], wheels[2], wheels[3]);
+        // Create wheels inside groups (for rotation separation)
+        wheelGroups[0] = createWheelGroup(-SPACING, SPACING, wheelMaterial);
+        wheelGroups[1] = createWheelGroup(-SPACING, -SPACING, wheelMaterial);
+        wheelGroups[2] = createWheelGroup(SPACING, -SPACING, wheelMaterial);
+        wheelGroups[3] = createWheelGroup(SPACING, SPACING, wheelMaterial);
+
+        // Add chassis and wheels to chassisGroup
+        chassisGroup.getChildren().add(chassis);
+        chassisGroup.getChildren().addAll(wheelGroups);
+
         chassisGroup.getTransforms().addAll(chassisTranslate, chassisRotate);
         root.getChildren().add(chassisGroup);
 
+        // Add grid planes for reference
         root.getChildren().addAll(
                 createGridPlane("XY", 1000, 100, Color.GRAY),
                 createGridPlane("XZ", 1000, 100, Color.LIGHTGRAY),
                 createGridPlane("YZ", 1000, 100, Color.LIGHTGRAY));
 
+        // Setup camera
         PerspectiveCamera camera = new PerspectiveCamera(true);
         camera.setNearClip(0.1);
         camera.setFarClip(10000);
@@ -64,6 +74,7 @@ public class WolfScene2 extends Application {
         stage.setScene(scene);
         stage.show();
 
+        // Keyboard controls for camera
         scene.setOnKeyPressed(e -> {
             switch (e.getCode()) {
                 case Q -> cameraTranslate.setZ(cameraTranslate.getZ() + 10);
@@ -154,50 +165,65 @@ public class WolfScene2 extends Application {
         READY.countDown();
     }
 
-    private Cylinder createWheel(double x, double y, PhongMaterial material) {
+    /** Creates a wheel cylinder inside a Group, positioned at (x,y) */
+    private Group createWheelGroup(double x, double y, PhongMaterial material) {
         Cylinder wheel = new Cylinder(40, 20);
         wheel.setMaterial(material);
-        wheel.getTransforms().add(new Rotate(90, Rotate.Y_AXIS));
-        wheel.setTranslateX(x);
-        wheel.setTranslateY(y);
-        return wheel;
+        wheel.getTransforms().add(new Rotate(90, Rotate.Y_AXIS)); // Base orientation
+
+        Group group = new Group(wheel);
+
+        // Position the wheel group
+        group.setTranslateX(x);
+        group.setTranslateY(y);
+
+        // Store references for update
+        for (int i = 0; i < wheels.length; i++) {
+            if (wheels[i] == null) {
+                wheels[i] = wheel;
+                wheelGroups[i] = group;
+                break;
+            }
+        }
+        return group;
     }
 
-    public static void updateWheels(double[] vels, double[] angles) {
+    /** Update wheels to rotate by steering angle */
+    private static void updateWheels(double[] vels, double[] angles) {
         for (int i = 0; i < 4; i++) {
-            PhongMaterial mat = new PhongMaterial(Color.BLACK);
-            double vel = vels[i];
-            if (vel > 0) {
-                vel = Math.min(1, vel);
-                mat = new PhongMaterial(Color.color(0, vel, 0));
-            } else if (vel == 0) {
-                mat = new PhongMaterial(Color.color(0, 0, 1.0));
-            } else if (vel < 0) {
-                vel = Math.max(-1, vel);
-                mat = new PhongMaterial(Color.color(-vel, 0, 0));
-            }
-            wheels[i].setMaterial(mat);
-            wheels[i].getTransforms()
-                    .removeIf(t -> t instanceof Rotate && ((Rotate) t).getAxis().equals(Rotate.X_AXIS));
-            wheels[i].getTransforms().add(new Rotate(angles[i] - 90.0, Rotate.X_AXIS));
+            Cylinder wheel = wheels[i];
+            // Remove previous steering rotations (exclude base 90 deg)
+            wheel.getTransforms().removeIf(t -> t instanceof Rotate && ((Rotate) t).getAngle() != 90);
+
+            double angleDegrees = Math.toDegrees(angles[i]);
+            Rotate rotate = new Rotate(angleDegrees, Rotate.X_AXIS);
+
+            wheel.getTransforms().add(rotate);
+
+            if(vels[i] > 0) wheel.setMaterial(new PhongMaterial(Color.GREEN));
+            else if(vels[i] < 0) wheel.setMaterial(new PhongMaterial(Color.RED));
+            else wheel.setMaterial(new PhongMaterial(Color.DARKGRAY));
+
+            /*
+             * Green for forward, red for backward, dark gray for stopped
+             */
         }
     }
 
+    /** Update chassis and wheels pose */
     public static void update(double[] vels, double[] angles, double[] chassisPose) {
         updateWheels(vels, angles);
 
         double x = chassisPose[0];
-        double y = -chassisPose[1]; // Assuming Y is inverted
-        double angleDeg = chassisPose[2];
+        double y = -chassisPose[1]; // Y axis inverted
 
-        // Update chassis transform
         WolfScene2 instance = Instance();
+        //instance.chassisRotate.setAngle(-angleDeg);
         instance.chassisTranslate.setX(x);
         instance.chassisTranslate.setY(y);
-        instance.chassisRotate.setAngle(-angleDeg);
 
-        instance.cameraTranslate.setX(x + dX);
-        instance.cameraTranslate.setY(y + dY);
+        //instance.cameraTranslate.setX(x + dX);
+        //instance.cameraTranslate.setY(y + dY);
     }
 
     private Group createGridPlane(String axis, double size, int divisions, Color color) {
