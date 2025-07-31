@@ -1,1 +1,18 @@
 /records/
+
+# === Build output ===
+/build/
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+
+# VS Code
+.vscode/
+
+# === OS files ===
+.DS_Store
+Thumbs.db
+
+# === Logs & temp files ===
+*.log
+*.tmp
+*.swp
