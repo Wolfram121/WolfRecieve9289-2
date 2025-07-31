@@ -19,9 +19,9 @@ public class WolfSend2 {
             NetworkTable t = inst.getTable("BotTelemetry");
             while (true) {
                 t.getEntry("LFD").setDouble(0);
-                t.getEntry("LBD").setDouble(rand.nextDouble());
-                t.getEntry("RBD").setDouble(-rand.nextDouble());
-                t.getEntry("RFD").setDouble(rand.nextDouble() - 0.5);
+                t.getEntry("LBD").setDouble(rand.nextDouble() * 10);
+                t.getEntry("RBD").setDouble(-rand.nextDouble() * 10);
+                t.getEntry("RFD").setDouble((rand.nextDouble() - 0.5) * 10);
                 t.getEntry("LFR").setDouble(0);
                 t.getEntry("LBR").setDouble(45);
                 t.getEntry("RBR").setDouble(rand.nextDouble() * 360 - 180);

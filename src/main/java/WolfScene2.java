@@ -167,6 +167,7 @@ public class WolfScene2 extends Application {
         for (int i = 0; i < 4; i++) {
             PhongMaterial mat = new PhongMaterial(Color.BLACK);
             double vel = vels[i];
+            vel /= 10;
             if (vel > 0) {
                 vel = Math.min(1, vel);
                 mat = new PhongMaterial(Color.color(0, vel, 0));

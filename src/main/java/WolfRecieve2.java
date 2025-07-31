@@ -73,6 +73,11 @@ public class WolfRecieve2 {
                     t.getEntry("ANGLE").getDouble(0.0)
                 };
 
+                if (t.getEntry("status").getString("FAKE").equals("FAKE")) {
+                } else {
+                    System.out.println(t.getEntry("status").getString("FAKE"));
+                }
+
                 JSONObject entry = new JSONObject();
                 entry.put("angles", new JSONArray(angles));
                 entry.put("vels", new JSONArray(vels));
