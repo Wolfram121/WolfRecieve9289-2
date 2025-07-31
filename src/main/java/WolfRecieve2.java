@@ -55,13 +55,13 @@ public class WolfRecieve2 {
                     .newSingleThreadScheduledExecutor();
 
             exec.scheduleAtFixedRate(() -> {
-                double[] angles = {
+                double[] vels = {
                     t.getEntry("LFD").getDouble(0.0),
                     t.getEntry("LBD").getDouble(0.0),
                     t.getEntry("RBD").getDouble(0.0),
                     t.getEntry("RFD").getDouble(0.0)
                 };
-                double[] reds = {
+                double[] angles = {
                     t.getEntry("LFR").getDouble(0.0),
                     t.getEntry("LBR").getDouble(0.0),
                     t.getEntry("RBR").getDouble(0.0),
@@ -75,7 +75,7 @@ public class WolfRecieve2 {
 
                 JSONObject entry = new JSONObject();
                 entry.put("angles", new JSONArray(angles));
-                entry.put("reds", new JSONArray(reds));
+                entry.put("vels", new JSONArray(vels));
                 entry.put("chassis", new JSONArray(chassis));
                 jsonArray.put(entry);
 
@@ -90,7 +90,7 @@ public class WolfRecieve2 {
                     }
                 }
 
-                Platform.runLater(() -> WolfScene2.update(reds, angles, chassis));
+                Platform.runLater(() -> WolfScene2.update(vels, angles, chassis));
             }, 0, 20, java.util.concurrent.TimeUnit.MILLISECONDS);
         } else if (TYPE == 2) {
             final String INPUT_PATH = "./records/" + args[2] + ".json";
@@ -117,24 +117,24 @@ public class WolfRecieve2 {
 
                 JSONObject entry = replayArray.getJSONObject(index[0]++);
                 JSONArray anglesArr = entry.getJSONArray("angles");
-                JSONArray redsArr = entry.getJSONArray("reds");
+                JSONArray velsArr = entry.getJSONArray("vels");
                 JSONArray chassisArr = entry.getJSONArray("chassis");
 
                 double[] angles = new double[anglesArr.length()];
-                double[] reds = new double[redsArr.length()];
+                double[] vels = new double[velsArr.length()];
                 double[] chassis = new double[chassisArr.length()];
 
                 for (int i = 0; i < angles.length; i++) {
                     angles[i] = anglesArr.getDouble(i);
                 }
-                for (int i = 0; i < reds.length; i++) {
-                    reds[i] = redsArr.getDouble(i);
+                for (int i = 0; i < vels.length; i++) {
+                    vels[i] = velsArr.getDouble(i);
                 }
                 for (int i = 0; i < chassis.length; i++) {
                     chassis[i] = chassisArr.getDouble(i);
                 }
 
-                Platform.runLater(() -> WolfScene2.update(reds, angles, chassis));
+                Platform.runLater(() -> WolfScene2.update(vels, angles, chassis));
             }, 0, 20, java.util.concurrent.TimeUnit.MILLISECONDS);
         } else if (TYPE == 3) {
             File recordsDir = new File("./records");

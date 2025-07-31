@@ -163,10 +163,19 @@ public class WolfScene2 extends Application {
         return wheel;
     }
 
-    public static void updateWheels(double[] reds, double[] angles) {
+    public static void updateWheels(double[] vels, double[] angles) {
         for (int i = 0; i < 4; i++) {
-            double red = Math.max(0, Math.min(1.0, reds[i]));
-            PhongMaterial mat = new PhongMaterial(Color.color(red, 0, 0));
+            PhongMaterial mat = new PhongMaterial(Color.BLACK);
+            double vel = vels[i];
+            if (vel > 0) {
+                vel = Math.min(1, vel);
+                mat = new PhongMaterial(Color.color(0, vel, 0));
+            } else if (vel == 0) {
+                mat = new PhongMaterial(Color.color(0, 0, 1.0));
+            } else if (vel < 0) {
+                vel = Math.max(-1, vel);
+                mat = new PhongMaterial(Color.color(-vel, 0, 0));
+            }
             wheels[i].setMaterial(mat);
             wheels[i].getTransforms()
                     .removeIf(t -> t instanceof Rotate && ((Rotate) t).getAxis().equals(Rotate.X_AXIS));
@@ -174,8 +183,8 @@ public class WolfScene2 extends Application {
         }
     }
 
-    public static void update(double[] reds, double[] angles, double[] chassisPose) {
-        updateWheels(reds, angles);
+    public static void update(double[] vels, double[] angles, double[] chassisPose) {
+        updateWheels(vels, angles);
 
         double x = chassisPose[0];
         double y = -chassisPose[1]; // Assuming Y is inverted
