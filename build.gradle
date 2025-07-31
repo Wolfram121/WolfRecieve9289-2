@@ -1,0 +1,65 @@
+plugins {
+    id 'java'
+    id 'application'
+    id "edu.wpi.first.GradleRIO" version "2025.3.2"
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+}
+
+repositories {
+    // maven { url "https://frcmaven.wpi.edu/artifactory/release/" }
+    // mavenCentral()
+    flatDir {
+        dirs "${projectDir}/libs"
+    }
+}
+
+dependencies {
+    implementation "edu.wpi.first.ntcore:ntcore-java:2025.3.2"
+    implementation "edu.wpi.first.wpiutil:wpiutil-java:2025.3.2"
+    //DOWNLOAD
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.17.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.1'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.17.1'
+    implementation name: 'json-20250517'
+
+    runtimeOnly "edu.wpi.first.ntcore:ntcore-jni:2025.3.2:windowsx86-64"
+}
+
+application {
+    mainClass = 'WolfRecieve2'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+javafx {
+    version = "17"
+    modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.graphics' ]
+}
+
+// Ensure native libraries are found at runtime
+run {
+    doFirst {
+        jvmArgs = ["-Djava.library.path=${projectDir}/libs"]
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java']
+        }
+    }
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'WolfRecieve2'
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
