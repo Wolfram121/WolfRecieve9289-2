@@ -1,3 +1,4 @@
-/records/
-/build/tmp/
-/.vscode/
+records/
+build/
+.vscode/
+*.class

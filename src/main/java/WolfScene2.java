@@ -1,3 +1,4 @@
+// JavaFX and 3D graphics imports
 import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.PerspectiveCamera;
@@ -12,51 +13,73 @@ import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
 
 public class WolfScene2 extends Application {
+    // Used to coordinate startup between threads (main thread waits until UI is ready)
     static final java.util.concurrent.CountDownLatch READY = new java.util.concurrent.CountDownLatch(1);
+
+    // 4 wheels to visualize swerve drive modules
     private static final Cylinder[] wheels = new Cylinder[4];
+
+    // Distance between wheels
     private static final double SPACING = 100;
 
+    // Camera transformation to move it in 3D space
     private final Translate cameraTranslate = new Translate(0, 0, 600);
+
+    // Offsets for smooth camera following
     private static double dX = 0;
     private static double dY = 0;
+
+    // Camera rotation angles
     private final Rotate rotateX = new Rotate(180, Rotate.X_AXIS);
     private final Rotate rotateY = new Rotate(0, Rotate.Y_AXIS);
     private final Rotate rotateZ = new Rotate(0, Rotate.Z_AXIS);
 
+    // Robot's position and heading
     private static final double[] chassisPose = new double[3];
+
+    // Group to hold robot chassis and wheels
     private final Group chassisGroup = new Group();
     private final Translate chassisTranslate = new Translate(0, 0, 0);
     private final Rotate chassisRotate = new Rotate(0, Rotate.Z_AXIS);
+
     private Box chassis;
 
     @Override
     public void start(Stage stage) {
-        Group root = new Group();
+        Group root = new Group(); // Root node of scene graph
 
+        // Create the robot chassis as a gray box
         chassis = new Box(SPACING * 2, SPACING * 2, 10);
         chassis.setMaterial(new PhongMaterial(Color.SLATEGRAY));
 
+        // Create wheels and apply their materials and transforms
         PhongMaterial wheelMaterial = new PhongMaterial(Color.DARKGRAY);
-        wheels[0] = createWheel(-SPACING, SPACING, wheelMaterial);
-        wheels[1] = createWheel(-SPACING, -SPACING, wheelMaterial);
-        wheels[2] = createWheel(SPACING, -SPACING, wheelMaterial);
-        wheels[3] = createWheel(SPACING, SPACING, wheelMaterial);
+        wheels[0] = createWheel(-SPACING, SPACING, wheelMaterial);  // Front Left
+        wheels[1] = createWheel(-SPACING, -SPACING, wheelMaterial); // Back Left
+        wheels[2] = createWheel(SPACING, -SPACING, wheelMaterial);  // Back Right
+        wheels[3] = createWheel(SPACING, SPACING, wheelMaterial);   // Front Right
 
+        // Add chassis and wheels to chassis group
         chassisGroup.getChildren().addAll(chassis, wheels[0], wheels[1], wheels[2], wheels[3]);
         chassisGroup.getTransforms().addAll(chassisTranslate, chassisRotate);
+
+        // Add to scene root
         root.getChildren().add(chassisGroup);
 
+        // Add 3D grid planes for spatial context
         root.getChildren().addAll(
                 createGridPlane("XY", 1000, 100, Color.GRAY),
                 createGridPlane("XZ", 1000, 100, Color.LIGHTGRAY),
                 createGridPlane("YZ", 1000, 100, Color.LIGHTGRAY));
 
+        // Setup perspective camera
         PerspectiveCamera camera = new PerspectiveCamera(true);
         camera.setNearClip(0.1);
         camera.setFarClip(10000);
         camera.setFieldOfView(50);
         camera.getTransforms().addAll(cameraTranslate, rotateX, rotateY, rotateZ);
 
+        // Create and configure scene
         Scene scene = new Scene(root, 800, 600, true);
         scene.setFill(Color.LIGHTBLUE);
         scene.setCamera(camera);
@@ -64,6 +87,7 @@ public class WolfScene2 extends Application {
         stage.setScene(scene);
         stage.show();
 
+        // Keyboard controls for moving and rotating camera
         scene.setOnKeyPressed(e -> {
             switch (e.getCode()) {
                 case Q -> cameraTranslate.setZ(cameraTranslate.getZ() + 10);
@@ -72,6 +96,8 @@ public class WolfScene2 extends Application {
                 case S -> cameraTranslate.setY(cameraTranslate.getY() - 10);
                 case A -> cameraTranslate.setX(cameraTranslate.getX() - 10);
                 case D -> cameraTranslate.setX(cameraTranslate.getX() + 10);
+
+                // NUMPAD views for pre-defined camera angles
                 case NUMPAD1 -> {
                     resetCameraRotation();
                     rotateX.setAngle(-112.5);
@@ -147,60 +173,67 @@ public class WolfScene2 extends Application {
                     dY = 300;
                 }
                 default -> {
+                    // Do nothing
                 }
             }
         });
 
+        // Indicate UI is ready
         READY.countDown();
     }
 
+    // Helper method to create a single wheel at a position
     private Cylinder createWheel(double x, double y, PhongMaterial material) {
-        Cylinder wheel = new Cylinder(40, 20);
+        Cylinder wheel = new Cylinder(40, 20); // radius 40, height 20
         wheel.setMaterial(material);
-        wheel.getTransforms().add(new Rotate(90, Rotate.Y_AXIS));
+        wheel.getTransforms().add(new Rotate(90, Rotate.Y_AXIS)); // Lay it flat
         wheel.setTranslateX(x);
         wheel.setTranslateY(y);
         return wheel;
     }
 
+    // Updates wheel rotation and color based on velocity and angle
     public static void updateWheels(double[] vels, double[] angles) {
         for (int i = 0; i < 4; i++) {
             PhongMaterial mat = new PhongMaterial(Color.BLACK);
-            double vel = vels[i];
-            vel /= 10;
+            double vel = vels[i] / 10;
+
+            // Color wheels by direction and magnitude
             if (vel > 0) {
-                vel = Math.min(1, vel);
-                mat = new PhongMaterial(Color.color(0, vel, 0));
+                mat = new PhongMaterial(Color.color(0, Math.min(1, vel), 0)); // Green for forward
             } else if (vel == 0) {
-                mat = new PhongMaterial(Color.color(0, 0, 1.0));
-            } else if (vel < 0) {
-                vel = Math.max(-1, vel);
-                mat = new PhongMaterial(Color.color(-vel, 0, 0));
+                mat = new PhongMaterial(Color.color(0, 0, 1.0)); // Blue for stationary
+            } else {
+                mat = new PhongMaterial(Color.color(Math.min(1, -vel), 0, 0)); // Red for reverse
             }
+
             wheels[i].setMaterial(mat);
+
+            // Remove previous rotation and add new one
             wheels[i].getTransforms()
                     .removeIf(t -> t instanceof Rotate && ((Rotate) t).getAxis().equals(Rotate.X_AXIS));
             wheels[i].getTransforms().add(new Rotate(angles[i] - 90.0, Rotate.X_AXIS));
         }
     }
 
+    // Updates full robot pose and camera
     public static void update(double[] vels, double[] angles, double[] chassisPose) {
         updateWheels(vels, angles);
-
         double x = chassisPose[0];
-        double y = -chassisPose[1]; // Assuming Y is inverted
+        double y = -chassisPose[1]; // Y is inverted
         double angleDeg = chassisPose[2];
 
-        // Update chassis transform
         WolfScene2 instance = Instance();
         instance.chassisTranslate.setX(x);
         instance.chassisTranslate.setY(y);
-        instance.chassisRotate.setAngle(-angleDeg);
+        instance.chassisRotate.setAngle(-angleDeg); // Rotate chassis
 
+        // Update camera to follow chassis with offset
         instance.cameraTranslate.setX(x + dX);
         instance.cameraTranslate.setY(y + dY);
     }
 
+    // Generates a grid in the specified plane (XY, XZ, YZ)
     private Group createGridPlane(String axis, double size, int divisions, Color color) {
         Group grid = new Group();
         double spacing = size / divisions;
@@ -242,6 +275,7 @@ public class WolfScene2 extends Application {
         return grid;
     }
 
+    // Resets camera rotation to default
     public static void resetCameraRotation() {
         WolfScene2 instance = Instance();
         instance.rotateX.setAngle(0);
@@ -249,6 +283,7 @@ public class WolfScene2 extends Application {
         instance.rotateZ.setAngle(0);
     }
 
+    // Singleton pattern to access the instance from static context
     private static WolfScene2 instance;
 
     private static WolfScene2 Instance() {
@@ -257,10 +292,10 @@ public class WolfScene2 extends Application {
 
     @Override
     public void init() {
-        instance = this;
+        instance = this; // Store instance on init
     }
 
     public static void main(String[] args) {
-        launch(args);
+        launch(args); // Launch JavaFX application
     }
 }
