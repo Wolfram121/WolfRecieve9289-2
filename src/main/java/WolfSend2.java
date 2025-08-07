@@ -26,6 +26,10 @@ public class WolfSend2 {
                 t.getEntry("LBR").setDouble(45);
                 t.getEntry("RBR").setDouble(rand.nextDouble() * 360 - 180);
                 t.getEntry("RFR").setDouble(rand.nextDouble() * 360 - 180);
+                t.getEntry("LFR2").setDouble(t.getEntry("LFR").getDouble(0.0) + (rand.nextDouble() * 22 - 11));
+                t.getEntry("LBR2").setDouble(t.getEntry("LBR").getDouble(0.0) + (rand.nextDouble() * 22 - 11));
+                t.getEntry("RBR2").setDouble(t.getEntry("RBR").getDouble(0.0) + (rand.nextDouble() * 22 - 11));
+                t.getEntry("RFR2").setDouble(t.getEntry("RFR").getDouble(0.0) + (rand.nextDouble() * 22 - 11));
                 t.getEntry("POS_X").setDouble(X += rand.nextDouble() * 5 - 2.5);
                 t.getEntry("POS_Y").setDouble(Y += rand.nextDouble() * 5 - 2.5);
                 t.getEntry("ANGLE").setDouble(ANGLE += rand.nextDouble() * 5 - 2.5);

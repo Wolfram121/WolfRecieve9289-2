@@ -1,3 +1,7 @@
-/records/
-/build/tmp/
+/.gradle/
 /.vscode/
+/bin/
+/build/
+/gradle/
+/records/
+/src/test/

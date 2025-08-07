@@ -16,12 +16,14 @@ public class WolfScene2 extends Application {
     private static final Cylinder[] wheels = new Cylinder[4];
     private static final double SPACING = 100;
 
-    private final Translate cameraTranslate = new Translate(0, 0, 600);
+    private final Translate cameTrans = new Translate(0, 0, 600);
     private static double dX = 0;
     private static double dY = 0;
-    private final Rotate rotateX = new Rotate(180, Rotate.X_AXIS);
-    private final Rotate rotateY = new Rotate(0, Rotate.Y_AXIS);
-    private final Rotate rotateZ = new Rotate(0, Rotate.Z_AXIS);
+    private final double camDist = 400.0;
+    private final double camDistX = Math.round(Math.sqrt((camDist * camDist) / 2.0));
+    private final Rotate rotX = new Rotate(180, Rotate.X_AXIS);
+    private final Rotate rotY = new Rotate(0, Rotate.Y_AXIS);
+    private final Rotate rotZ = new Rotate(0, Rotate.Z_AXIS);
 
     private static final double[] chassisPose = new double[3];
     private final Group chassisGroup = new Group();
@@ -47,17 +49,17 @@ public class WolfScene2 extends Application {
         root.getChildren().add(chassisGroup);
 
         root.getChildren().addAll(
-                createGridPlane("XY", 1000, 100, Color.GRAY),
-                createGridPlane("XZ", 1000, 100, Color.LIGHTGRAY),
-                createGridPlane("YZ", 1000, 100, Color.LIGHTGRAY));
+                createGrid("XY", 10000, 500, Color.RED),
+                createGrid("XZ", 10000, 500, Color.GREEN),
+                createGrid("YZ", 10000, 500, Color.BLUE));
 
         PerspectiveCamera camera = new PerspectiveCamera(true);
         camera.setNearClip(0.1);
         camera.setFarClip(10000);
         camera.setFieldOfView(50);
-        camera.getTransforms().addAll(cameraTranslate, rotateX, rotateY, rotateZ);
+        camera.getTransforms().addAll(cameTrans, rotX, rotY, rotZ);
 
-        Scene scene = new Scene(root, 800, 600, true);
+        Scene scene = new Scene(root, 1000, 800, true);
         scene.setFill(Color.LIGHTBLUE);
         scene.setCamera(camera);
         stage.setTitle("Wheel Telemetry Viewer");
@@ -66,85 +68,91 @@ public class WolfScene2 extends Application {
 
         scene.setOnKeyPressed(e -> {
             switch (e.getCode()) {
-                case Q -> cameraTranslate.setZ(cameraTranslate.getZ() + 10);
-                case E -> cameraTranslate.setZ(cameraTranslate.getZ() - 10);
-                case W -> cameraTranslate.setY(cameraTranslate.getY() + 10);
-                case S -> cameraTranslate.setY(cameraTranslate.getY() - 10);
-                case A -> cameraTranslate.setX(cameraTranslate.getX() - 10);
-                case D -> cameraTranslate.setX(cameraTranslate.getX() + 10);
+                case Q -> cameTrans.setZ(cameTrans.getZ() + 10);
+                case E -> cameTrans.setZ(cameTrans.getZ() - 10);
+                case W -> dY += 5;
+                case S -> dY -= 5;
+                case A -> dX -= 5;
+                case D -> dX += 5;
+                case UP -> rotX.setAngle(rotX.getAngle() - 2);
+                case DOWN -> rotX.setAngle(rotX.getAngle() + 2);
+                case LEFT -> rotY.setAngle(rotY.getAngle() - 2);
+                case RIGHT -> rotY.setAngle(rotY.getAngle() + 2);
+                case OPEN_BRACKET -> rotZ.setAngle(rotZ.getAngle() - 2);
+                case CLOSE_BRACKET -> rotZ.setAngle(rotZ.getAngle() + 2);
                 case NUMPAD1 -> {
-                    resetCameraRotation();
-                    rotateX.setAngle(-112.5);
-                    rotateY.setAngle(45);
-                    rotateZ.setAngle(11.25);
-                    cameraTranslate.setZ(100);
-                    dX = -212;
-                    dY = -300;
+                    resetCamRot();
+                    rotX.setAngle(-112.5);
+                    rotY.setAngle(45);
+                    rotZ.setAngle(11.25);
+                    cameTrans.setZ(100);
+                    dX = -this.camDistX;
+                    dY = -this.camDistX;
                 }
                 case NUMPAD2 -> {
-                    resetCameraRotation();
-                    rotateX.setAngle(-112.5);
-                    cameraTranslate.setZ(100);
+                    resetCamRot();
+                    rotX.setAngle(-112.5);
+                    cameTrans.setZ(100);
                     dX = 0;
-                    dY = -300;
+                    dY = -this.camDist;
                 }
                 case NUMPAD3 -> {
-                    resetCameraRotation();
-                    rotateX.setAngle(-112.5);
-                    rotateY.setAngle(-45);
-                    rotateZ.setAngle(-11.25);
-                    cameraTranslate.setZ(100);
-                    dX = 212;
-                    dY = -300;
+                    resetCamRot();
+                    rotX.setAngle(-112.5);
+                    rotY.setAngle(-45);
+                    rotZ.setAngle(-11.25);
+                    cameTrans.setZ(100);
+                    dX = this.camDistX;
+                    dY = -this.camDistX;
                 }
                 case NUMPAD4 -> {
-                    resetCameraRotation();
-                    rotateY.setAngle(112.5);
-                    rotateZ.setAngle(-90);
-                    cameraTranslate.setZ(100);
-                    dX = -300;
+                    resetCamRot();
+                    rotY.setAngle(112.5);
+                    rotZ.setAngle(-90);
+                    cameTrans.setZ(100);
+                    dX = -this.camDist;
                     dY = 0;
                 }
                 case NUMPAD5 -> {
-                    resetCameraRotation();
-                    rotateX.setAngle(180);
-                    cameraTranslate.setZ(500);
+                    resetCamRot();
+                    rotX.setAngle(180);
+                    cameTrans.setZ(500);
                     dX = 0;
                     dY = 0;
                 }
                 case NUMPAD6 -> {
-                    resetCameraRotation();
-                    rotateY.setAngle(-112.5);
-                    rotateZ.setAngle(90);
-                    cameraTranslate.setZ(100);
-                    dX = 300;
+                    resetCamRot();
+                    rotY.setAngle(-112.5);
+                    rotZ.setAngle(90);
+                    cameTrans.setZ(100);
+                    dX = this.camDist;
                     dY = 0;
                 }
                 case NUMPAD7 -> {
-                    resetCameraRotation();
-                    rotateX.setAngle(112.5);
-                    rotateY.setAngle(45);
-                    rotateZ.setAngle(168.75);
-                    cameraTranslate.setZ(100);
-                    dX = -212;
-                    dY = 300;
+                    resetCamRot();
+                    rotX.setAngle(112.5);
+                    rotY.setAngle(45);
+                    rotZ.setAngle(168.75);
+                    cameTrans.setZ(100);
+                    dX = -this.camDistX;
+                    dY = this.camDistX;
                 }
                 case NUMPAD8 -> {
-                    resetCameraRotation();
-                    rotateX.setAngle(112.5);
-                    rotateZ.setAngle(180);
-                    cameraTranslate.setZ(100);
+                    resetCamRot();
+                    rotX.setAngle(112.5);
+                    rotZ.setAngle(180);
+                    cameTrans.setZ(100);
                     dX = 0;
-                    dY = 300;
+                    dY = this.camDist;
                 }
                 case NUMPAD9 -> {
-                    resetCameraRotation();
-                    rotateX.setAngle(112.5);
-                    rotateY.setAngle(-45);
-                    rotateZ.setAngle(-168.75);
-                    cameraTranslate.setZ(100);
-                    dX = 212;
-                    dY = 300;
+                    resetCamRot();
+                    rotX.setAngle(112.5);
+                    rotY.setAngle(-45);
+                    rotZ.setAngle(-168.75);
+                    cameTrans.setZ(100);
+                    dX = this.camDistX;
+                    dY = this.camDistX;
                 }
                 default -> {
                 }
@@ -163,19 +171,20 @@ public class WolfScene2 extends Application {
         return wheel;
     }
 
-    public static void updateWheels(double[] vels, double[] angles) {
+    public static void updateWheels(double[] vels, double[] angles, double[] angles2) {
         for (int i = 0; i < 4; i++) {
-            PhongMaterial mat = new PhongMaterial(Color.BLACK);
-            double vel = vels[i];
-            vel /= 10;
-            if (vel > 0) {
+            PhongMaterial mat = new PhongMaterial(Color.WHITE);
+            double vel = vels[i] / 10;
+            if (!wheelCheck(angles[i], angles2[i])) {
+                mat = new PhongMaterial(Color.color(1, 0, 0));
+            } else if (vel > 0) {
                 vel = Math.min(1, vel);
                 mat = new PhongMaterial(Color.color(0, vel, 0));
             } else if (vel == 0) {
-                mat = new PhongMaterial(Color.color(0, 0, 1.0));
+                mat = new PhongMaterial(Color.color(0, 0, 0));
             } else if (vel < 0) {
                 vel = Math.max(-1, vel);
-                mat = new PhongMaterial(Color.color(-vel, 0, 0));
+                mat = new PhongMaterial(Color.color(0, 0, -vel));
             }
             wheels[i].setMaterial(mat);
             wheels[i].getTransforms()
@@ -184,8 +193,8 @@ public class WolfScene2 extends Application {
         }
     }
 
-    public static void update(double[] vels, double[] angles, double[] chassisPose) {
-        updateWheels(vels, angles);
+    public static void update(double[] vels, double[] angles, double[] angles2, double[] chassisPose) {
+        updateWheels(vels, angles, angles2);
 
         double x = chassisPose[0];
         double y = -chassisPose[1]; // Assuming Y is inverted
@@ -197,36 +206,47 @@ public class WolfScene2 extends Application {
         instance.chassisTranslate.setY(y);
         instance.chassisRotate.setAngle(-angleDeg);
 
-        instance.cameraTranslate.setX(x + dX);
-        instance.cameraTranslate.setY(y + dY);
+        instance.cameTrans.setX(x + dX);
+        instance.cameTrans.setY(y + dY);
     }
 
-    private Group createGridPlane(String axis, double size, int divisions, Color color) {
-        Group grid = new Group();
-        double spacing = size / divisions;
+    private static boolean wheelCheck(double vel1, double vel2) {
+        return Math.abs(vel1 - vel2) < 10;
+    }
 
-        for (int i = -divisions / 2; i <= divisions / 2; i++) {
+    private Group createGrid(String axis, double size, int divs, Color color) {
+        Group grid = new Group();
+        double spacing = size / divs;
+
+        for (int i = -divs / 2; i <= divs / 2; i++) {
             Line line1, line2;
             switch (axis) {
                 case "XY" -> {
                     line1 = new Line(-size / 2, i * spacing, size / 2, i * spacing);
                     line2 = new Line(i * spacing, -size / 2, i * spacing, size / 2);
+
+                    line1.setTranslateZ(0);
+                    line2.setTranslateZ(0);
                 }
                 case "XZ" -> {
-                    line1 = new Line(-size / 2, 0, size / 2, 0);
-                    line2 = new Line(i * spacing, 0, i * spacing, 0);
+                    line1 = new Line(-size / 2, i * spacing, size / 2, i * spacing);
+                    line2 = new Line(i * spacing, -size / 2, i * spacing, size / 2);
+
                     line1.getTransforms().add(new Rotate(90, Rotate.X_AXIS));
                     line2.getTransforms().add(new Rotate(90, Rotate.X_AXIS));
-                    line1.setTranslateZ(i * spacing);
-                    line2.setTranslateZ(-size / 2 + i * spacing);
+
+                    line1.setTranslateY(0);
+                    line2.setTranslateY(0);
                 }
                 case "YZ" -> {
-                    line1 = new Line(-size / 2, 0, size / 2, 0);
-                    line2 = new Line(i * spacing, 0, i * spacing, 0);
+                    line1 = new Line(-size / 2, i * spacing, size / 2, i * spacing);
+                    line2 = new Line(i * spacing, -size / 2, i * spacing, size / 2);
+
                     line1.getTransforms().add(new Rotate(90, Rotate.Y_AXIS));
                     line2.getTransforms().add(new Rotate(90, Rotate.Y_AXIS));
-                    line1.setTranslateX(i * spacing);
-                    line2.setTranslateX(-size / 2 + i * spacing);
+
+                    line1.setTranslateX(0);
+                    line2.setTranslateX(0);
                 }
                 default -> {
                     return grid;
@@ -242,11 +262,11 @@ public class WolfScene2 extends Application {
         return grid;
     }
 
-    public static void resetCameraRotation() {
+    public static void resetCamRot() {
         WolfScene2 instance = Instance();
-        instance.rotateX.setAngle(0);
-        instance.rotateY.setAngle(0);
-        instance.rotateZ.setAngle(0);
+        instance.rotX.setAngle(0);
+        instance.rotY.setAngle(0);
+        instance.rotZ.setAngle(0);
     }
 
     private static WolfScene2 instance;
